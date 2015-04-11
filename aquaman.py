@@ -19,8 +19,4 @@ if __name__ == '__main__':
     on = [datetime.time(hour=12, minute=0)]
     off = [datetime.time(hour=15, minute=0)]
     s = power.PowerScheduler(1,on, off)
-
-    log.debug("Current event is %s" % str(s.current()))
-    log.debug("Next event is %s" % str(s.next()))
-
     s.start()
