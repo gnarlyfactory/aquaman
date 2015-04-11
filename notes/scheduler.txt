@@ -1,0 +1,15 @@
+PowerScheduler
+
+    device      The device.
+    state       The current state.
+    next        The next state.
+    _timer      The pending timer event.
+
+    start()     Start the scheduler. Schedule the first state change,
+                which should happen immediately.
+    stop()      Stop the pending timer event.
+    _changed()  Callback when a state change event occurs. This should
+                schedule the next state change.
+    _next()     Get the next state using the schedule. If the current
+                state is null, it means we need the state which should
+                be in force currently given the current time of day.
