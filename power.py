@@ -7,6 +7,7 @@ electric outlets.
 import logging
 import threading
 import datetime
+import pytz
 
 ON = True
 OFF = False
@@ -168,5 +169,45 @@ class PowerScheduler:
         
         return next
 
-        
-        
+
+def load_schedule(filename):
+    import csv
+
+    schedules = {}
+    date = datetime.datetime.utcnow().date()
+
+    with open(filename, 'r') as schedfile:
+        reader = csv.reader(schedfile, delimiter="\t")
+        n = 0
+        local = pytz.timezone("America/New_York")
+
+        for row in reader:
+            if n > 0:
+                device, time, state = row
+
+                timeobj = datetime.datetime.strptime(time, "%H:%M").time()
+                localobj = local.localize(datetime.datetime.combine(date, timeobj))
+                timeutc = localobj.astimezone(pytz.utc).time()
+
+                if device not in schedules:
+                    schedules[device] = PowerSchedule(device)
+
+                if state == 'ON':
+                    schedules[device].on_times.append(timeutc)
+                elif state == 'OFF':
+                    schedules[device].off_times.append(timeutc)
+            n += 1
+
+    return schedules
+
+class PowerSchedule:
+    """
+    PowerSchedule contains the information of the schecdule of power on
+    and off times.
+    """
+
+    def __init__(self, device):
+        self.device = device
+        self.on_times = []
+        self.off_times = []
+
