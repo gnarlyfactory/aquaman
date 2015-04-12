@@ -52,6 +52,54 @@ def schedule_off(device, when, callback):
     timer.start()
     return timer
 
+def load_schedule(filename):
+    """
+    Load a schedule from a tab-delimited text file. A dictionary
+    of PowerScheulde instances will be returned where the key is
+    the device that the PowerSchedule applies to.
+    
+    The contents of the file at 'filename' should look like this:
+
+    device     time      state
+    one        11:00     ON
+    one        19:00     OFF
+    two        00:00     ON
+    two        05:00     OFF
+    air        19:00     ON
+    air        20:00     OFF
+
+    The device column can be any string, time is a local time HH:MM,
+    and state should be either 'ON' or 'OFF'
+    """
+    import csv
+
+    schedules = {}
+    date = datetime.datetime.utcnow().date()
+
+    with open(filename, 'r') as schedfile:
+        reader = csv.reader(schedfile, delimiter="\t")
+        n = 0
+        local = pytz.timezone("America/New_York")
+
+        for row in reader:
+            if n > 0:
+                device, time, state = row
+
+                timeobj = datetime.datetime.strptime(time, "%H:%M").time()
+                localobj = local.localize(datetime.datetime.combine(date, timeobj))
+                timeutc = localobj.astimezone(pytz.utc).time()
+
+                if device not in schedules:
+                    schedules[device] = PowerSchedule(device)
+
+                if state == 'ON':
+                    schedules[device].on_times.append(timeutc)
+                elif state == 'OFF':
+                    schedules[device].off_times.append(timeutc)
+            n += 1
+
+    return schedules
+
 
 class PowerScheduler:
     """
@@ -170,36 +218,6 @@ class PowerScheduler:
         return next
 
 
-def load_schedule(filename):
-    import csv
-
-    schedules = {}
-    date = datetime.datetime.utcnow().date()
-
-    with open(filename, 'r') as schedfile:
-        reader = csv.reader(schedfile, delimiter="\t")
-        n = 0
-        local = pytz.timezone("America/New_York")
-
-        for row in reader:
-            if n > 0:
-                device, time, state = row
-
-                timeobj = datetime.datetime.strptime(time, "%H:%M").time()
-                localobj = local.localize(datetime.datetime.combine(date, timeobj))
-                timeutc = localobj.astimezone(pytz.utc).time()
-
-                if device not in schedules:
-                    schedules[device] = PowerSchedule(device)
-
-                if state == 'ON':
-                    schedules[device].on_times.append(timeutc)
-                elif state == 'OFF':
-                    schedules[device].off_times.append(timeutc)
-            n += 1
-
-    return schedules
-
 class PowerSchedule:
     """
     PowerSchedule contains the information of the schecdule of power on
@@ -207,6 +225,9 @@ class PowerSchedule:
     """
 
     def __init__(self, device):
+        """
+        Create a new PowerSchedule
+        """
         self.device = device
         self.on_times = []
         self.off_times = []
