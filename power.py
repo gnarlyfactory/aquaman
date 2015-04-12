@@ -153,7 +153,7 @@ class PowerScheduler:
 
         if mark is None:
             if next is None:
-                next = times[len(times - 1)]
+                next = times[len(times) - 1]
                 yesterday = now.date() - datetime.timedelta(days=1)
                 next = (datetime.datetime.combine(yesterday, next[0]), next[1])
             else:
