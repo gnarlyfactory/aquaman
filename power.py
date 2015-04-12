@@ -8,6 +8,7 @@ import logging
 import threading
 import datetime
 import pytz
+import csv
 
 ON = True
 OFF = False
@@ -71,7 +72,6 @@ def load_schedule(filename):
     The device column can be any string, time is a local time HH:MM,
     and state should be either 'ON' or 'OFF'
     """
-    import csv
 
     schedules = {}
     date = datetime.datetime.utcnow().date()
@@ -87,6 +87,7 @@ def load_schedule(filename):
 
                 timeobj = datetime.datetime.strptime(time, "%H:%M").time()
                 localobj = local.localize(datetime.datetime.combine(date, timeobj))
+                localobj = pytz.utc.normalize(localobj)
                 timeutc = localobj.astimezone(pytz.utc).time()
 
                 if device not in schedules:
