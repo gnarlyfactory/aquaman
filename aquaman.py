@@ -9,7 +9,7 @@ def done(when, device, powerstate):
 
 if __name__ == '__main__':
     import logging.config
-    logging.config.fileConfig('logging.ini')
+    logging.config.fileConfig('config/logging.ini')
     log = logging.getLogger(__name__)
 
     schedules = power.load_schedule('config/power.txt')
