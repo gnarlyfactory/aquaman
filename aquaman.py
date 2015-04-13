@@ -11,9 +11,6 @@ if __name__ == '__main__':
     import logging.config
     logging.config.fileConfig('logging.ini')
     log = logging.getLogger(__name__)
-    #now = datetime.datetime.utcnow()
-    #then = now + datetime.timedelta(seconds=2)
-    #power.schedule_off(1, then, callback=done)
 
     schedules = power.load_schedule('config/power.txt')
 
