@@ -7,11 +7,18 @@ electric outlets.
 import logging
 import threading
 import datetime
-import pytz
 import csv
+import util
 
+# States that power can be
 ON = True
 OFF = False
+
+# Local time zone for display
+ZONE = "America/New_York"
+
+def localize(dt):
+    return util.convert_to_local(dt, ZONE)
 
 def turn_on(device, callback):
     log = logging.getLogger(__name__)
@@ -33,7 +40,7 @@ def schedule_on(device, when, callback):
     'when' should be a datetime object in UTC time.
     """
     log = logging.getLogger(__name__)
-    log.info("Scheduling device '%s' to turn on at %s" % (device, when))
+    log.info("Scheduling device '%s' to turn on at %s" % (device, localize(when)))
     delay = (when - datetime.datetime.utcnow()).total_seconds()
     callback_proj = lambda *a, **kwargs: callback(when, device, *a, **kwargs)
     timer = threading.Timer(delay, turn_on, (device,), {'callback':callback_proj})
@@ -46,7 +53,7 @@ def schedule_off(device, when, callback):
     'when' should be a datetime object in UTC time.
     """
     log = logging.getLogger(__name__)
-    log.info("Scheduling device '%s' to turn off at %s" % (device, when))
+    log.info("Scheduling device '%s' to turn off at %s" % (device, localize(when)))
     delay = (when - datetime.datetime.utcnow()).total_seconds()
     callback_proj = lambda *a, **kwargs: callback(when, device, *a, **kwargs)
     timer = threading.Timer(delay, turn_off, (device,), {'callback':callback_proj})
@@ -74,21 +81,20 @@ def load_schedule(filename):
     """
 
     schedules = {}
-    date = datetime.datetime.utcnow().date()
+    date = datetime.datetime.now().date()
 
     with open(filename, 'r') as schedfile:
         reader = csv.reader(schedfile, delimiter="\t")
         n = 0
-        local = pytz.timezone("America/New_York")
 
         for row in reader:
             if n > 0:
                 device, time, state = row
 
                 timeobj = datetime.datetime.strptime(time, "%H:%M").time()
-                localobj = local.localize(datetime.datetime.combine(date, timeobj))
-                localobj = pytz.utc.normalize(localobj)
-                timeutc = localobj.astimezone(pytz.utc).time()
+                localdt = datetime.datetime.combine(date, timeobj)
+                utcdt = util.convert_to_utc(localdt, ZONE)
+                timeutc = utcdt.time()
 
                 if device not in schedules:
                     schedules[device] = PowerSchedule(device)
