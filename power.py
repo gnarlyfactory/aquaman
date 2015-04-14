@@ -17,10 +17,22 @@ OFF = False
 # Local time zone for display
 ZONE = "America/New_York"
 
-def localize(dt):
-    return util.convert_to_local(dt, ZONE)
+def localize(dt, zone=None):
+    """
+    Convert a datetime dt to the local timezone.
+    zone is an optional timezone. The global ZONE variable will
+    be used by default.
+    """
+    if zone is None:
+        return util.convert_to_local(dt, zone)
+    else:
+        return util.convert_to_local(dt, ZONE)
 
-def turn_on(device, callback):
+def turn_on(device, callback=None):
+    """
+    Turn on a device and call the callback function when the power
+    has been turned on.
+    """
     log = logging.getLogger(__name__)
     log.info("Turning on device '%s'" % device)
 
@@ -28,6 +40,10 @@ def turn_on(device, callback):
         callback(ON)
 
 def turn_off(device, callback=None):
+    """
+    Turn off a device and call the callback function when the power
+    has been turned off.
+    """
     log = logging.getLogger(__name__)
     log.info("Turning off device '%s'" % device)
     
