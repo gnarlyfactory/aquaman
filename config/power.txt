@@ -1,5 +1,7 @@
 device	time	state
 lights	12:00	ON
 lights	20:00	OFF
+lights	23:50	ON
+lights	23:51	OFF
 co2	11:00	ON
 co2	19:00	OFF

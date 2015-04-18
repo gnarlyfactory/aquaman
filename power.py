@@ -9,6 +9,7 @@ import threading
 import datetime
 import csv
 import util
+import time
 
 # States that power can be
 ON = True
@@ -24,9 +25,9 @@ def localize(dt, zone=None):
     be used by default.
     """
     if zone is None:
-        return util.convert_to_local(dt, zone)
-    else:
         return util.convert_to_local(dt, ZONE)
+    else:
+        return util.convert_to_local(dt, zone)
 
 def turn_on(device, callback=None):
     """
@@ -141,6 +142,8 @@ class PowerScheduler:
         self.device = device
         self.on_times = on_times
         self.off_times = off_times
+        self.states = [(x, ON) for x in self.on_times] + [(x, OFF) for x in self.off_times]
+        self.states = sorted(self.states, key=lambda x:x[0])
 
         # the currently pending timer
         self._timer = None
@@ -240,6 +243,63 @@ class PowerScheduler:
         
         return next
 
+class ThreadPowerScheduler(PowerScheduler, threading.Thread):
+    def __init__(self, device, on_times, off_times):
+        PowerScheduler.__init__(self, device, on_times, off_times)
+        threading.Thread.__init__(self)
+    
+    def run(self):
+        try:
+            now = datetime.datetime.utcnow()
+            yesterday = now.date() - datetime.timedelta(days=1)
+            state = None
+
+            # find the initial state, the last state before the current time
+            for s in self.states:
+                if s[0] <= now.time():
+                    state = s
+
+            # if no state was found before the current time, the current 
+            # state is the last state from the prior day
+            if state is None:
+                state = self.states[len(self.states) - 1]
+
+            while True:
+                # set state to 'state'
+                if state[1] == ON:
+                    turn_on(self.device)
+                elif state[1] == OFF:
+                    turn_off(self.device)
+
+                now = datetime.datetime.utcnow()
+                next_state = None
+
+                # find the next state
+                for s in self.states:
+                    if s[0] > state[0]:
+                        next_state = s
+                        break
+
+                next = None
+                if next_state is None:
+                    tomorrow = now.date() + datetime.timedelta(days=1)
+                    next = datetime.datetime.combine(tomorrow, self.states[0][0])
+                    state = self.states[0]
+                else:
+                    next = datetime.datetime.combine(now.date(), next_state[0])
+                    state = next_state
+                
+                # sleep until the next state's time
+                delay = (next - now).total_seconds()
+                
+                if delay >= 0:
+                    time.sleep(delay)
+                
+        except KeyboardInterrupt:
+            pass
+
+    def start(self):
+        threading.Thread.start(self)
 
 class PowerSchedule:
     """
