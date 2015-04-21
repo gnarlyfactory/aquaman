@@ -25,6 +25,6 @@ if __name__ == '__main__':
     schedulers = []
 
     for device, schedule in schedules.items():
-        s = power.ThreadPowerScheduler(device, schedule.on_times, schedule.off_times)
+        s = power.PowerScheduler(device, schedule.on_times, schedule.off_times)
         schedulers.append(s)
         s.start()
