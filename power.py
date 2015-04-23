@@ -51,32 +51,6 @@ def turn_off(device, callback=None):
     if callback is not None:
         callback(OFF)
 
-def schedule_on(device, when, callback):
-    """
-    Schedule the time for a device to be turned on. The variable
-    'when' should be a datetime object in UTC time.
-    """
-    log = logging.getLogger(__name__)
-    log.info("Scheduling device '{}' to turn on at {}".format(device, localize(when)))
-    delay = (when - datetime.datetime.utcnow()).total_seconds()
-    callback_proj = lambda *a, **kwargs: callback(when, device, *a, **kwargs)
-    timer = threading.Timer(delay, turn_on, (device,), {'callback':callback_proj})
-    timer.start()
-    return timer
-
-def schedule_off(device, when, callback):
-    """
-    Schedule the time for a device to be turned off. The variable
-    'when' should be a datetime object in UTC time.
-    """
-    log = logging.getLogger(__name__)
-    log.info("Scheduling device '{}' to turn off at {}".format(device, localize(when)))
-    delay = (when - datetime.datetime.utcnow()).total_seconds()
-    callback_proj = lambda *a, **kwargs: callback(when, device, *a, **kwargs)
-    timer = threading.Timer(delay, turn_off, (device,), {'callback':callback_proj})
-    timer.start()
-    return timer
-
 def load_schedule(filename):
     """
     Load a schedule from a tab-delimited text file. A dictionary
